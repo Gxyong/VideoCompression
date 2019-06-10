@@ -28,6 +28,12 @@ public class VideoCompress {
         return task;
     }
 
+    public static VideoCompressTask compressVideoLittle(String srcPath, String destPath, CompressListener listener) {
+        VideoCompressTask task =  new VideoCompressTask(listener, VideoController.COMPRESS_QUALITY_LITTLE);
+        task.execute(srcPath, destPath);
+        return task;
+    }
+
     /**
      *  @dec  开启线程,进行压缩
      *  @author tangxiaopeng
