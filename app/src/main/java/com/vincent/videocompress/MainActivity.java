@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -20,6 +21,9 @@ import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+
+import runtimepermissions.PermissionsManager;
+import runtimepermissions.PermissionsResultAction;
 
 /**
  *  @dec  首页
@@ -40,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestPermissions();
         setContentView(R.layout.activity_main);
     }
 
@@ -58,14 +63,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-
         Button btn_compress = (Button) findViewById(R.id.btn_compress);
         btn_compress.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                 destPath = tv_output.getText().toString() + File.separator + "out_VID_" + new SimpleDateFormat("yyyyMMdd_HHmmss", getLocale()).format(new Date()) + ".mp4";
-                VideoCompress.compressVideoMedium(tv_input.getText().toString(), destPath, new VideoCompress.CompressListener() {
+                destPath = tv_output.getText().toString() + File.separator + "out_VID_" + new SimpleDateFormat("yyyyMMdd_HHmmss", getLocale()).format(new Date()) + ".mp4";
+                VideoCompress.compressVideoMedium(tv_output.getText().toString(), destPath, new VideoCompress.CompressListener() {
                     @Override
                     public void onStart() {
 
@@ -88,9 +91,12 @@ public class MainActivity extends AppCompatActivity {
                         Util.writeFile(MainActivity.this, "End at: " + new SimpleDateFormat("HH:mm:ss", getLocale()).format(new Date()) + "\n");
                         Util.writeFile(MainActivity.this, "Total: " + ((endTime - startTime)/1000) + "s" + "\n");
                         Util.writeFile(MainActivity.this);
-
-                        startActivity(new Intent(MainActivity.this,VideoActivity.class).putExtra("vvVideo",destPath));
-
+                        try {
+                            Log.e("==" ,"filePath_size_old="+ FileUtils.getFileSize(new File(tv_output.getText().toString())));
+                            Log.e("==" ,"filePath_size_new="+ FileUtils.getFileSize(new File(destPath)));
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
 
                     @Override
@@ -119,16 +125,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addLoacalVideo() {
-        Intent intentvideo = new Intent();
-        if (Build.VERSION.SDK_INT < 19) {
-            intentvideo.setAction(Intent.ACTION_GET_CONTENT);
-            intentvideo.setType("video/*");
+        Intent intent;
+        if (Build.VERSION.SDK_INT < 19) { //api 19 and later
+            intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("video/*");
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            startActivityForResult(intent, REQUEST_FOR_VIDEO_FILE);
         } else {
-            intentvideo.setAction(Intent.ACTION_OPEN_DOCUMENT);
-            intentvideo.addCategory(Intent.CATEGORY_OPENABLE);
-            intentvideo.setType("video/*");
+            intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("video/*");
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            Intent wrapperIntent = Intent.createChooser(intent, "请选择视频");
+            startActivityForResult(wrapperIntent, REQUEST_FOR_VIDEO_FILE);
         }
-        startActivityForResult(Intent.createChooser(intentvideo, "选择要导入的视频"), REQUEST_FOR_VIDEO_FILE);
     }
 
     @Override
@@ -138,11 +147,11 @@ public class MainActivity extends AppCompatActivity {
             if (data != null && data.getData() != null) {
 //                inputPath = data.getData().getPath();
 //                tv_input.setText(inputPath);
-
                 try {
-                    inputPath = Util.getFilePath(this, data.getData());
+//                    inputPath = Util.getFilePath(this, data.getData());
+                    inputPath =  FileUtils.getRealFilePath(this, data.getData());
                     tv_input.setText(inputPath);
-                } catch (URISyntaxException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
@@ -173,4 +182,18 @@ public class MainActivity extends AppCompatActivity {
     public static Locale getSystemLocale(Configuration config){
         return config.getLocales().get(0);
     }
+
+    @TargetApi(23)
+    private void requestPermissions() {
+        PermissionsManager.getInstance().requestAllManifestPermissionsIfNecessary(this, new PermissionsResultAction() {
+            @Override
+            public void onGranted() {
+            }
+
+            @Override
+            public void onDenied(String permission) {
+            }
+        });
+    }
+
 }
