@@ -23,6 +23,7 @@ public class VideoController {
     static final int COMPRESS_QUALITY_HIGH = 1;
     static final int COMPRESS_QUALITY_MEDIUM = 2;
     static final int COMPRESS_QUALITY_LOW = 3;
+    static final int COMPRESS_QUALITY_LITTLE = 4;
 
     public static File cachedFile;
     public String path;
@@ -275,9 +276,6 @@ public class VideoController {
                 break;
             case COMPRESS_QUALITY_MEDIUM:
 
-//              resultWidth = originalWidth / 2;
-//              resultHeight = originalHeight / 2;
-
                 resultWidth = originalWidth;
                 resultHeight = originalHeight;
                 bitrate = resultWidth * resultHeight *5;
@@ -288,6 +286,11 @@ public class VideoController {
                 resultWidth = originalWidth / 2;
                 resultHeight = originalHeight / 2;
                 bitrate = (resultWidth / 2) * (resultHeight / 2) * 10;
+                break;
+            case  COMPRESS_QUALITY_LITTLE:
+                resultWidth = originalWidth * 2 / 3;
+                resultHeight = originalHeight * 2 / 3;
+                bitrate = (resultWidth / 2) * (resultHeight / 2) * 5;
                 break;
         }
 
@@ -440,7 +443,7 @@ public class VideoController {
                             //设置帧率
                             outputFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, colorFormat);
                             outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
-                            outputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 25);
+                            outputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, 15);
                             outputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 10);
 
                             if (Build.VERSION.SDK_INT < 18) {
